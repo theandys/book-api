@@ -1,0 +1,13 @@
+{
+    "editor.formatOnSave": true,
+    "editor.codeActionsOnSave": {
+        "source.fixAll": "explicit"
+    },
+    "eslint.validate": ["javascript"],
+    "prettier.singleQuote": true,
+    "prettier.semi": true,
+    "files.exclude": {
+        "node_modules/": true
+    }
+  }
+  

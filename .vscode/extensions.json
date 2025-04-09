@@ -1,0 +1,12 @@
+{
+    "recommendations": [
+        "dbaeumer.vscode-eslint",
+        "esbenp.prettier-vscode",
+        "mikestead.dotenv",
+        "humao.rest-client",
+        "mongodb.mongodb-vscode",
+        "streetsidesoftware.code-spell-checker",
+        "christian-kohler.path-intellisense"
+    ]
+  }
+  
