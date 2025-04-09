@@ -1,15 +1,42 @@
 // src/controllers/bookController.js
+import { get } from "mongoose";
 import Book from "../models/bookModel.js";
+import ApiError from "../utils/ApiError.js";
+import { buildBookFilters, buildBookSorts } from "../utils/filterBuilder.js";
+import { paginate, getPaginationMeta } from "../utils/paginateHelper.js";
 
 // @desc Get all books
-// @route GET /api/books
+// @route GET /api/books?keyword=searchTerm&genre=genreName&page=1&pageSize=10
 // @access 
-export const getBooks = async (req, res) => {
+export const getBooks = async (req, res, next) => {
     try {
-        const books = await Book.find();
-        res.status(200).json(books);
+        const page = Number(req.query.page) || 1;
+        const pageSize = Number(req.query.pageSize) || 10;
+        
+        const filters = buildBookFilters(req.query);
+        const sortBy = buildBookSorts(req.query);
+        const { limit, skip } = paginate(req.query, { page, pageSize });
+
+        // query the database
+        const totalBooks = await Book.countDocuments(filters);
+        const books = await Book.find(filters)
+            .sort(sortBy)
+            .limit(limit)
+            .skip(skip);
+
+        const pagination = getPaginationMeta({ 
+            totalItems: totalBooks, 
+            page, 
+            pageSize 
+        });
+
+        res.status(200).json({
+            success: true,
+            data: books,
+            ...pagination,
+        });
     } catch (error) {
-        res.status(500).json({ message: error.message });
+        next(error);
     }
 };
 
@@ -18,27 +45,32 @@ export const getBooks = async (req, res) => {
 // @access Public
 export const createBook = async (req, res) => {    
     try {
-        const { title, author, publisher, year } = req.body;
+        const { title, author, publisher, year, description, genre } = req.body;
 
         if (!title || !author || !publisher || !year) {
-            return res.status(400).json({ message: "All fields are required" });
+            throw new ApiError(400, "Title, author, publisher, and year are required fields");
         }
         if (year < 2000 || year > new Date().getFullYear()) {
-            return res.status(400).json({ message: "Year must be between 2000 and current year" });
+            throw new ApiError(400, "Year must be between 2000 and current year");
         }
 
         const newBook = new Book({ 
             title, 
             author, 
             publisher, 
-            year 
+            year, 
+            description,
+            genre 
         });
-
         const createdBook  = await newBook.save();
-        res.status(201).json(createdBook );
+
+        res.status(201).json({
+            success: true,
+            data: createdBook, 
+        });
     }
     catch (error) {
-        res.status(500).json({ message: error.message });
+        next(error);
     }
 };
 
@@ -48,13 +80,16 @@ export const createBook = async (req, res) => {
 export const getBookById = async (req, res) => {
     try {
         const book = await Book.findById(req.params.id);
-
         if (book) {
-            res.status(200).json(book);
+            res.status(200).json({
+                success: true,
+                data: book,
+            });
         }
-        res.status(404).json({ message: "Book not found" });
+        
+        throw new ApiError(404, "Book not found");
     } catch (error) {
-        res.status(500).json({ message: error.message });
+        next(error);
     }
 };
 
@@ -63,13 +98,13 @@ export const getBookById = async (req, res) => {
 // @access Public
 export const updateBook = async (req, res) => {
     try {
-        const { title, author, publisher, year } = req.body;
+        const { title, author, publisher, year, description, genre } = req.body;
 
-        if (!title || !author || !publisher || !year) {
-            return res.status(400).json({ message: "At least one field must be provided to update" });
-        }
+        // if (!title || !author || !publisher || !year) {
+        //     throw new ApiError(400, "Title, author, publisher, and year are required fields");
+        // }
         if (year < 2000 || year > new Date().getFullYear()) {
-            return res.status(400).json({ message: "Year must be between 2000 and current year" });
+            throw new ApiError(400, "Year must be between 2000 and current year");
         }
 
         const updatedBook = await Book.findByIdAndUpdate(req.params.id, req.body, {
@@ -77,12 +112,15 @@ export const updateBook = async (req, res) => {
         });
 
         if (updatedBook ) {
-            res.status(200).json(updatedBook );
-        } else {
-            res.status(404).json({ message: "Book not found" });
-        }
+            res.status(200).json({ 
+                success: true,
+                data: updatedBook,
+            });
+        } 
+        
+        throw new ApiError(404, "Book not found");
     } catch (error) {
-        res.status(500).json({ message: error.message });
+        next(error);
     }
 };
 
@@ -92,13 +130,15 @@ export const updateBook = async (req, res) => {
 export const deleteBook = async (req, res) => {
     try {
         const deletedBook = await Book.findByIdAndDelete(req.params.id);
-
         if (deletedBook ) {
-            res.status(200).json({ message: "Book deleted successfully" });
-        } else {
-            res.status(404).json({ message: "Book not found" });
+            res.status(200).json({ 
+                success: true,
+                message: "Book deleted successfully" 
+            });
         }
+            
+        throw new ApiError(404, "Book not found");
     } catch (error) {
-        res.status(500).json({ message: error.message });
+        next(error);
     }
 };

@@ -30,6 +30,15 @@ const bookSchema = new mongoose.Schema(
             min: [2000, "Year must be at least 2000"],
             max: [new Date().getFullYear(), "Year must not exceed current year"],
         },
+        description: {
+            type: String,
+            default: "",
+        },
+        genre: {
+            type: String,
+            trim: true,
+            default: "General",
+        },
     },
     {
         timestamps: true,
