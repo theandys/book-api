@@ -51,10 +51,11 @@ npm run dev
 - Localhost: `http://localhost:5000/api/books`
 - Example endpoints:
   - `GET /api/books`
-  - `GET /api/books/?page=2`
-  - `GET /api/books/?keyword=mern`
-  - `GET /api/books/?genre=Programming`
-  - `GET /api/books/?keyword=react&page=1&genre=Programming`
+  - `GET /api/books?page=2&pageSize=5`
+  - `GET /api/books?keyword=mern`
+  - `GET /api/books?genre=Programming`
+  - `GET /api/books?yearPublishedFrom=2010&yearPublishedTo=2024`
+  - `GET /api/books?sort=yearPublished&order=asc`
   - `POST /api/books`
   - `GET /api/books/:id`
   - `PUT /api/books/:id`
