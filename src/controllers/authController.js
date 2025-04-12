@@ -1,5 +1,6 @@
 import jwt from 'jsonwebtoken';
 import asyncHandler from 'express-async-handler';
+import gravatar from 'gravatar';
 import ApiError from "../utils/ApiError.js";
 import generateToken from "../utils/generateToken.js";
 import generateAccessToken from '../utils/generateAccessToken.js';
@@ -25,10 +26,12 @@ export const registerUser = asyncHandler(async (req, res) => {
 
     res.status(200).json({
         success: true,
-        _id: user._id,
-        name: user.name,
-        email: user.email,
         token: generateToken(user._id),
+        data: {
+            _id: user._id,
+            name: user.name,
+            email: user.email,
+        }
     });
 });
 
@@ -53,8 +56,8 @@ export const authUser = asyncHandler (async (req, res) => {
 
         res.status(200).json({
             success: true,
-            accessToken,
-            user: {
+            token: accessToken,
+            data: {
                 _id: user._id,
                 name: user.name,
                 email: user.email,
@@ -74,9 +77,11 @@ export const getUserProfile = asyncHandler (async (req, res) => {
     if (user) {
         res.status(200).json({
             success: true,
-            _id: user._id,
-            name: user.name,
-            email: user.email,
+            data: {
+                _id: user._id,
+                name: user.name,
+                email: user.email,
+            }
         });
     }
 
@@ -107,8 +112,43 @@ export const refreshToken = asyncHandler(async (req, res) => {
         const accessToken = generateAccessToken(user._id);  
         res.status(200).json({ 
             success: true, 
-            accessToken 
+            token: accessToken 
         });
     });
-  });
+});
+
+// @desc    Update user profile
+// @route   PUT /api/users/profile
+// @access  Private (need token)
+export const updateUserProfile = asyncHandler(async (req, res) => {
+    const user = await User.findById(req.user._id);  
+    if (!user) {
+      throw new ApiError(404, 'User not found');
+    }
+  
+    // Update name dan email
+    user.name = req.body.name || user.name;
+    user.email = req.body.email || user.email;
+     // Generate avatar URL
+     user.avatar = gravatar.url(user.email, { s: '200', r: 'pg', d: 'mm' });
+  
+    // if password change
+    if (req.body.password) {
+        user.password = req.body.password;
+    }
+  
+    const updatedUser = await user.save();
+    const accessToken = generateAccessToken(updatedUser._id);
+  
+    res.status(200).json({
+        success: true,
+        token: accessToken, // new token
+        data: {
+            _id: updatedUser._id,
+            name: updatedUser.name,
+            email: updatedUser.email,
+            avatar: updatedUser.avatar,
+        }
+    });
+});
   
