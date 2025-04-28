@@ -24,7 +24,7 @@ https://github.com/theandys/book-api.git
 2. **Navigate into project folder**
 
 ```bash
-cd book-api
+cd express-book-api
 ```
 
 3. **Install Dependencies**
