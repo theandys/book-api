@@ -88,3 +88,27 @@ npm run dev
 ---
 
 Happy Coding! 🚀
+
+better response > done
+validation di model > done
+Gas relation!
+Gas continue FE
+
+🔐 add auth JWT (Login/Register user) > done
+
+🛡️ Middleware protect route > progress
+
+📜 Documentation API use Postman Collection > done
+
+📜 Documentation API use Swagger
+
+🚀 Deploy ke Render, Vercel, or Railway free
+
+📈 Setup pagination, searching, filtering di API > done
+
+sampai sini:
+Gas setup Auth JWT (Login, Register) dan Middleware protect route
+
+nvm ls
+nvm use 22.14.0
+nvm use 12.22.12

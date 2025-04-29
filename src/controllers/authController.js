@@ -123,14 +123,14 @@ export const refreshToken = asyncHandler(async (req, res) => {
 export const updateUserProfile = asyncHandler(async (req, res) => {
     const user = await User.findById(req.user._id);  
     if (!user) {
-      throw new ApiError(404, 'User not found');
+        throw new ApiError(404, 'User not found');
     }
   
     // Update name dan email
     user.name = req.body.name || user.name;
     user.email = req.body.email || user.email;
-     // Generate avatar URL
-     user.avatar = gravatar.url(user.email, { s: '200', r: 'pg', d: 'mm' });
+    // Generate avatar URL
+    user.avatar = gravatar.url(user.email, { s: '200', r: 'pg', d: 'mm' });
   
     // if password change
     if (req.body.password) {
@@ -151,4 +151,53 @@ export const updateUserProfile = asyncHandler(async (req, res) => {
         }
     });
 });
+
+export const updateUserProfileWithOldPassword = asyncHandler(async (req, res) => {
+    const user = await User.findById(req.user._id);
+  
+    if (!user) {
+        throw new ApiError(404, 'User not found');
+    }
+  
+    const { name, email, password, oldPassword } = req.body;
+  
+    // Update name & email
+    if (name) user.name = name;
+    if (email) user.email = email;
+    // Generate avatar URL
+    user.avatar = gravatar.url(user.email, { s: '200', r: 'pg', d: 'mm' });
+  
+    // Kalau user mau ganti password
+    if (password) {
+        if (!oldPassword) {
+            throw new ApiError(400, 'Current password (oldPassword) is required');
+        }
+  
+        const isMatch = await bcrypt.compare(oldPassword, user.password);
+        if (!isMatch) {
+            throw new ApiError(401, 'Incorrect current password');
+        }
+  
+        const isSame = await bcrypt.compare(password, user.password);
+        if (isSame) {
+            throw new ApiError(400, 'New password cannot be the same as the current password');
+        }
+    
+        user.password = password; // Akan otomatis di-hash lewat pre-save hook
+    }
+  
+    const updatedUser = await user.save();
+    const accessToken = generateAccessToken(updatedUser._id);
+  
+    res.status(200).json({
+        success: true,
+        token: accessToken, // new token
+        data: {
+            _id: updatedUser._id,
+            name: updatedUser.name,
+            email: updatedUser.email,
+            avatar: updatedUser.avatar,
+        }
+    });
+  });
   
